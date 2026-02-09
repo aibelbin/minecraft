@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "minecraft-bot": {
+      "command": "node",
+      "args": ["/home/aibel/Documents/Code/Minecraft/mcp-server.js"],
+      "env": {
+        "MC_HOST": "localhost",
+        "MC_PORT": "22122",
+        "MC_USERNAME": "MiniProj_BOT",
+        "VIEWER_PORT": "3000"
+      }
+    }
+  }
+}
