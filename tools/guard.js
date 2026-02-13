@@ -5,7 +5,7 @@
 const { Movements, goals } = require('mineflayer-pathfinder')
 
 module.exports = function guard(bot) {
-    console.log('[Guard] Tool loaded')
+    console.error('[Guard] Tool loaded')
 
     let guardPos = null
 

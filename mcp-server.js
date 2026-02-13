@@ -19,7 +19,7 @@ const guard = require('./tools/guard');
 const selfDefense = require('./tools/selfDefense');
 
 // Initialize bot tools
-console.log('Initializing Minecraft bot tools...');
+console.error('Initializing Minecraft bot tools...');
 autoEquip(bot);
 const guardTool = guard(bot);
 const selfDefenseTool = selfDefense(bot);
@@ -118,13 +118,13 @@ const tools = [
   },
   {
     name: 'minecraft_attack_entity',
-    description: 'Attack a nearby entity by name or type.',
+    description: 'Attack a nearby entity by name or type. Use "player" or "nearest player" to attack the closest player, or specify a username/mob type.',
     inputSchema: {
       type: 'object',
       properties: {
         entityName: {
           type: 'string',
-          description: 'Name of the entity to attack (e.g., "zombie", "skeleton", or a player username)',
+          description: 'Name of the entity to attack (e.g., "zombie", "skeleton", "player", "nearest player", or a specific player username)',
         },
       },
       required: ['entityName'],
@@ -299,14 +299,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'minecraft_attack_entity': {
-        const entity = bot.nearestEntity(e => {
-          if (e.type === 'player') {
-            return e.username && e.username.toLowerCase().includes(args.entityName.toLowerCase());
-          } else if (e.type === 'mob') {
-            return e.name && e.name.toLowerCase().includes(args.entityName.toLowerCase());
-          }
-          return false;
-        });
+        let entity;
+        
+        // Special handling for "nearest/closest player/mob" commands
+        const searchTerm = args.entityName.toLowerCase();
+        if (searchTerm.includes('nearest') || searchTerm.includes('closest') || 
+            searchTerm === 'player' || searchTerm === 'any player') {
+          // Find nearest player
+          entity = bot.nearestEntity(e => e.type === 'player');
+        } else if (searchTerm === 'mob' || searchTerm === 'any mob' || 
+                   searchTerm.includes('nearest mob') || searchTerm.includes('closest mob')) {
+          // Find nearest mob
+          entity = bot.nearestEntity(e => e.type === 'mob');
+        } else {
+          // Normal name search
+          entity = bot.nearestEntity(e => {
+            if (e.type === 'player') {
+              return e.username && e.username.toLowerCase().includes(searchTerm);
+            } else if (e.type === 'mob') {
+              return e.name && e.name.toLowerCase().includes(searchTerm);
+            }
+            return false;
+          });
+        }
 
         if (!entity) {
           return {

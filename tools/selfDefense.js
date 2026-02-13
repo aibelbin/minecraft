@@ -5,7 +5,7 @@
 const { Movements, goals } = require('mineflayer-pathfinder')
 
 module.exports = function selfDefense(bot) {
-    console.log('[SelfDefense] Tool loaded')
+    console.error('[SelfDefense] Tool loaded')
 
     // Check if bot should run away based on health and hunger
     function shouldRunAway() {
@@ -74,7 +74,7 @@ module.exports = function selfDefense(bot) {
     })
 
     bot.on('spawn', () => {
-        console.log('[SelfDefense] Bot spawned - self-defense mode active')
+        console.error('[SelfDefense] Bot spawned - self-defense mode active')
     })
 
     // Return public API

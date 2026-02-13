@@ -18,17 +18,24 @@ bot.loadPlugin(pathfinder)
 
 // Viewer setup
 bot.once('spawn', () => {
+    // Disable viewer by default when running as MCP server (stdout must be JSON-RPC only)
+    // Set ENABLE_VIEWER=true to override
+    if (process.env.ENABLE_VIEWER !== 'true') {
+        console.error('[viewer] disabled (set ENABLE_VIEWER=true to enable)')
+        return
+    }
+    
     const viewerPort = Number(process.env.VIEWER_PORT ?? 3000)
     try {
         const { mineflayer: mineflayerViewer } = require('prismarine-viewer')
         mineflayerViewer(bot, { port: viewerPort, firstPerson: true })
-        console.log(`[viewer] running at http://localhost:${viewerPort}`)
+        console.error(`[viewer] running at http://localhost:${viewerPort}`)
     } catch (err) {
-        console.log('[viewer] not available')
+        console.error(`[viewer] not available: ${err.message}`)
     }
 })
 
-bot.on('kicked', (reason) => console.log('Kicked for', reason))
-bot.on('error', (err) => console.log('Error:', err))
+bot.on('kicked', (reason) => console.error('Kicked for', reason))
+bot.on('error', (err) => console.error('Error:', err))
 
 module.exports = bot

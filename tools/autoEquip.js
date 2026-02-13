@@ -3,7 +3,7 @@
  * Automatically equips sword and shield when items are collected
  */
 module.exports = function autoEquip(bot) {
-    console.log('[AutoEquip] Tool loaded')
+    console.error('[AutoEquip] Tool loaded')
 
     // Equip sword when picked up
     bot.on('playerCollect', (collector, itemDrop) => {
