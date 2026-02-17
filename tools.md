@@ -146,9 +146,66 @@ Equip a specific item from inventory to hand or off-hand.
 
 ---
 
+### 9. minecraft_give_item
+Give items from bot inventory to a nearby player by tossing them. The player must be online, visible, and within 32 blocks. Items are tossed towards the player for them to pick up.
+
+**Parameters:**
+- `player` (string, required): Username of the player to give items to
+- `item` (string, required): Name of the item to give (e.g., "oak_log", "diamond", "iron_ingot")
+- `amount` (number, required): Number of items to give
+
+**Returns:**
+- Success status
+- Number of items given
+- Player and item details
+
+**Usage:**
+- Give wood: `{"player": "Steve", "item": "oak_log", "amount": 10}`
+- Give diamonds: `{"player": "Alex", "item": "diamond", "amount": 5}`
+
+**Keywords:** give, toss, throw, donate, transfer items
+
+---
+
+## ⛏️ Resource Gathering
+
+### 10. minecraft_gather_resource
+**🔄 AUTONOMOUS ACTION** - Autonomously mine and gather a specific block resource until the requested amount is collected. The bot will continuously search for blocks, pathfind to them, mine them, and collect drops. Automatically equips the best available tool. Stops when target amount is reached or no more blocks are found.
+
+**Important:** This is an **autonomous loop** - the bot will continuously mine until completion or failure. Optionally, collected items can be automatically given to a player after gathering completes.
+
+**Parameters:**
+- `resource` (string, required): Block resource to gather (e.g., "oak_log", "cobblestone", "iron_ore", "dirt")
+- `amount` (number, required): Target number of items to collect
+- `range` (number, optional): Maximum search range in blocks (default: 64, max: 128)
+- `giveToPlayer` (string, optional): Player username to give collected items to after gathering completes
+
+**Returns:**
+- Success status
+- Number of items collected
+- Resource name
+- If giveToPlayer used: number given and recipient
+
+**Usage:**
+- Gather wood: `{"resource": "oak_log", "amount": 20}`
+- Gather cobblestone: `{"resource": "cobblestone", "amount": 64, "range": 100}`
+- **Gather and give to player**: `{"resource": "oak_log", "amount": 10, "giveToPlayer": "Steve"}`
+
+**Features:**
+- ✅ Auto-equips best tool (diamond > iron > stone > wood)
+- ✅ Collects drops automatically
+- ✅ Handles inventory full gracefully
+- ✅ Pathfinding to blocks
+- ✅ Continuous until target reached
+- ✅ Optional auto-give to player
+
+**Keywords:** mine, gather, collect, harvest, farm blocks
+
+---
+
 ## 💬 Communication
 
-### 9. minecraft_chat
+### 11. minecraft_chat
 Send a chat message in the Minecraft server as the bot.
 
 **Parameters:**
@@ -161,14 +218,15 @@ Send a chat message in the Minecraft server as the bot.
 
 ## Summary
 
-**Total Tools: 9**
+**Total Tools: 11**
 
 **Categories:**
 - Guard & Defense: 2 tools
 - Combat: 1 tool  
 - Movement: 1 tool
 - Information & Status: 3 tools
-- Inventory Management: 1 tool
+- Inventory Management: 2 tools
+- Resource Gathering: 1 tool
 - Communication: 1 tool
 
 **Common Use Cases:**
@@ -178,3 +236,6 @@ Send a chat message in the Minecraft server as the bot.
 - **Attack threats**: Use `minecraft_attack_entity` with entity name
 - **Navigation**: Use `minecraft_move_to` for pathfinding
 - **Gear up**: Use `minecraft_equip_item` to change weapons/tools
+- **Gather resources**: Use `minecraft_gather_resource` to autonomously mine blocks
+- **Give items to players**: Use `minecraft_give_item` to transfer items
+- **Gather and give**: Use `minecraft_gather_resource` with `giveToPlayer` parameter

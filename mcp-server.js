@@ -18,6 +18,7 @@ const autoEquip = require('./tools/autoEquip');
 const guard = require('./tools/guard');
 const selfDefense = require('./tools/selfDefense');
 const gatherResource = require('./tools/gatherResource');
+const giveItem = require('./tools/giveItem');
 
 // Initialize bot tools
 console.error('Initializing Minecraft bot tools...');
@@ -25,6 +26,7 @@ autoEquip(bot);
 const guardTool = guard(bot);
 const selfDefenseTool = selfDefense(bot);
 const gatherResourceTool = gatherResource(bot);
+const giveItemTool = giveItem(bot);
 
 // Create MCP server
 const server = new Server(
@@ -179,7 +181,7 @@ const tools = [
   },
   {
     name: 'minecraft_gather_resource',
-    description: 'Autonomously mine and gather a specific block resource until the requested amount is collected. The bot will continuously search for blocks, pathfind to them, mine them, and collect drops. Automatically equips best available tool. Stops when target amount is reached or no more blocks are found. Keywords: mine, gather, collect, harvest, farm blocks.',
+    description: 'Autonomously mine and gather a specific block resource until the requested amount is collected. The bot will continuously search for blocks, pathfind to them, mine them, and collect drops. Automatically equips best available tool. Stops when target amount is reached or no more blocks are found. Optionally give collected items to a player. Keywords: mine, gather, collect, harvest, farm blocks.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -196,8 +198,34 @@ const tools = [
           description: 'Maximum search range in blocks (default: 64, max: 128)',
           default: 64,
         },
+        giveToPlayer: {
+          type: 'string',
+          description: 'Optional: Player username to give the collected items to after gathering completes',
+        },
       },
       required: ['resource', 'amount'],
+    },
+  },
+  {
+    name: 'minecraft_give_item',
+    description: 'Give items from bot inventory to a nearby player by tossing them. The player must be online, visible, and within 32 blocks. Items are tossed towards the player for them to pick up. Keywords: give, toss, throw, donate, transfer items.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        player: {
+          type: 'string',
+          description: 'Username of the player to give items to',
+        },
+        item: {
+          type: 'string',
+          description: 'Name of the item to give (e.g., "oak_log", "diamond", "iron_ingot")',
+        },
+        amount: {
+          type: 'number',
+          description: 'Number of items to give',
+        },
+      },
+      required: ['player', 'item', 'amount'],
     },
   },
 ];
@@ -445,6 +473,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const resource = args.resource;
         const amount = args.amount;
         const range = args.range || 64;
+        const giveToPlayer = args.giveToPlayer;
 
         // Validate inputs
         if (!resource || typeof resource !== 'string') {
@@ -474,6 +503,44 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // Execute gathering (this is async and will take time)
         const result = await gatherResourceTool.gatherResource(resource, amount, range);
 
+        // If gathering succeeded and giveToPlayer is specified, give the items
+        if (result.success && giveToPlayer) {
+          const giveResult = await giveItemTool.giveItem(giveToPlayer, resource, result.collected);
+          
+          if (giveResult.success) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    message: `Successfully gathered ${result.collected}x ${result.resource} and gave ${giveResult.given}x to ${giveToPlayer}`,
+                    collected: result.collected,
+                    resource: result.resource,
+                    given: giveResult.given,
+                    givenTo: giveToPlayer,
+                  }, null, 2),
+                },
+              ],
+            };
+          } else {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    message: `Gathered ${result.collected}x ${result.resource} but failed to give to ${giveToPlayer}: ${giveResult.message}`,
+                    collected: result.collected,
+                    resource: result.resource,
+                    giveError: giveResult.message,
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
         if (result.success) {
           return {
             content: [
@@ -502,6 +569,85 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               },
             ],
             isError: result.collected === 0,
+          };
+        }
+      }
+
+      case 'minecraft_give_item': {
+        const playerName = args.player;
+        const itemName = args.item;
+        const amount = args.amount;
+
+        // Validate inputs
+        if (!playerName || typeof playerName !== 'string') {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Please provide a valid player name.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        if (!itemName || typeof itemName !== 'string') {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Please provide a valid item name.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        if (!amount || amount <= 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Please provide a valid amount greater than 0.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Execute give item
+        const result = await giveItemTool.giveItem(playerName, itemName, amount);
+
+        if (result.success) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  message: result.message,
+                  given: result.given,
+                  player: result.player,
+                  item: result.item,
+                }, null, 2),
+              },
+            ],
+          };
+        } else {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: result.message,
+                  given: result.given,
+                  player: result.player,
+                  item: result.item,
+                }, null, 2),
+              },
+            ],
+            isError: true,
           };
         }
       }
