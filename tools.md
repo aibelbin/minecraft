@@ -7,28 +7,49 @@ Complete list of available tools for the Minecraft bot MCP server.
 ## 🛡️ Guard & Defense
 
 ### 1. minecraft_guard_position
-Command the bot to guard a specific position and attack nearby hostile mobs within 16 blocks. The bot will patrol the area and eliminate threats.
+**🔄 CONTINUOUS ACTION** - Starts persistent guarding mode that runs until stopped.
+
+**Two Modes:**
+
+**📍 Position Mode** - Guards static coordinates and attacks nearby hostile mobs (within 16 blocks)
+- Bot patrols the area
+- Only attacks hostile mobs
+- Returns to position after combat
+
+**👤 Player Protection Mode** - Actively follows and protects a specific player
+- Bot follows the player continuously (stays within 3 blocks)
+- Attacks ANY entity (players OR mobs) that gets within 8 blocks of the protected player
+- Aggressive bodyguard mode - defends against all threats
+- Updates position as player moves
+
+**⚠️ Important:** This is a **persistent action** - once started, it continues running in the background until you call `stop_guarding`.
 
 **Parameters:**
-- `x` (number, optional): X coordinate to guard
-- `y` (number, optional): Y coordinate to guard  
-- `z` (number, optional): Z coordinate to guard
-- `player` (string, optional): Player username whose position to guard (alternative to coordinates)
+- `x` (number, optional): X coordinate to guard (for position mode ONLY)
+- `y` (number, optional): Y coordinate to guard (for position mode ONLY)
+- `z` (number, optional): Z coordinate to guard (for position mode ONLY)
+- `player` (string, optional): Player username to follow and protect (for player mode ONLY)
+
+**⚠️ Use EITHER coordinates OR player, never both!**
 
 **Usage:**
 - Guard coordinates: `{"x": 100, "y": 64, "z": 200}`
-- Guard player: `{"player": "Steve"}`
+- Protect player: `{"player": "Steve"}` ← **Bot will follow Steve continuously**
+
+**Keywords:** guard, protect, defend, bodyguard, follow, patrol, watch, watch over
 
 ---
 
 ### 2. minecraft_stop_guarding
-Stop the bot from guarding its current position. The bot will cease patrolling and attacking.
+**🛑 STOP CONTINUOUS ACTION** - Immediately cancels any active guarding mode (position or player protection). The bot will cease all guarding activities and return to idle state.
 
 **Parameters:**
 - None
 
 **Usage:**
 - `{}`
+
+**Keywords:** stop, halt, cease, stand down, cancel guard, stop protecting
 
 ---
 

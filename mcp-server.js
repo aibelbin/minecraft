@@ -41,32 +41,32 @@ const server = new Server(
 const tools = [
   {
     name: 'minecraft_guard_position',
-    description: 'Command the bot to guard a specific position and attack nearby hostile mobs within 16 blocks. The bot will patrol the area and eliminate threats.',
+    description: 'START continuous guarding mode (runs until stopped). Two modes: Position mode - guard static coordinates and attack nearby mobs. Player mode - actively follow and protect a specific player, attacking anyone within 8 blocks. This is a persistent action that continues indefinitely. Keywords: guard, protect, defend, bodyguard, follow, watch over.',
     inputSchema: {
       type: 'object',
       properties: {
         x: {
           type: 'number',
-          description: 'X coordinate to guard',
+          description: 'X coordinate to guard (only for position mode - do not use with player)',
         },
         y: {
           type: 'number',
-          description: 'Y coordinate to guard',
+          description: 'Y coordinate to guard (only for position mode - do not use with player)',
         },
         z: {
           type: 'number',
-          description: 'Z coordinate to guard',
+          description: 'Z coordinate to guard (only for position mode - do not use with player)',
         },
         player: {
           type: 'string',
-          description: 'Player username whose position to guard (alternative to coordinates)',
+          description: 'Player username to actively follow and protect (only for player mode - do not use with x/y/z)',
         },
       },
     },
   },
   {
     name: 'minecraft_stop_guarding',
-    description: 'Stop the bot from guarding its current position. The bot will cease patrolling and attacking.',
+    description: 'STOP continuous guarding mode. Cancels any active guard position or player protection. The bot will cease all guarding activities immediately. Keywords: stop guarding, stop protecting, cancel guard, stand down.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -189,24 +189,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'minecraft_guard_position': {
-        if (args.player) {
+        // Player protection mode takes priority
+        if (args.player && args.player.trim() !== '') {
           const player = bot.players[args.player];
           if (!player || !player.entity) {
             return {
               content: [
                 {
                   type: 'text',
-                  text: `Player "${args.player}" not found or not visible.`,
+                  text: `Player "${args.player}" not found or not visible. Make sure they are online and nearby.`,
                 },
               ],
             };
           }
-          guardTool.guardArea(player.entity.position);
+          guardTool.guardPlayer(args.player);
           return {
             content: [
               {
                 type: 'text',
-                text: `Now guarding ${args.player}'s position at ${player.entity.position.toString()}`,
+                text: `🛡️ Now actively protecting ${args.player}. I will follow them continuously and attack any threats within 8 blocks. Use 'stop_guarding' to cancel.`,
               },
             ],
           };
@@ -217,7 +218,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [
               {
                 type: 'text',
-                text: `Now guarding position (${args.x}, ${args.y}, ${args.z})`,
+                text: `🏰 Now guarding position (${args.x}, ${args.y}, ${args.z}). I will patrol and attack nearby hostile mobs. Use 'stop_guarding' to cancel.`,
               },
             ],
           };
@@ -226,7 +227,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [
               {
                 type: 'text',
-                text: 'Please provide either coordinates (x, y, z) or a player name.',
+                text: 'Please provide either coordinates (x, y, z) OR a player name (not both).',
               },
             ],
           };
