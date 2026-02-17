@@ -17,12 +17,14 @@ const bot = require('./bot');
 const autoEquip = require('./tools/autoEquip');
 const guard = require('./tools/guard');
 const selfDefense = require('./tools/selfDefense');
+const gatherResource = require('./tools/gatherResource');
 
 // Initialize bot tools
 console.error('Initializing Minecraft bot tools...');
 autoEquip(bot);
 const guardTool = guard(bot);
 const selfDefenseTool = selfDefense(bot);
+const gatherResourceTool = gatherResource(bot);
 
 // Create MCP server
 const server = new Server(
@@ -173,6 +175,29 @@ const tools = [
         },
       },
       required: ['itemName', 'slot'],
+    },
+  },
+  {
+    name: 'minecraft_gather_resource',
+    description: 'Autonomously mine and gather a specific block resource until the requested amount is collected. The bot will continuously search for blocks, pathfind to them, mine them, and collect drops. Automatically equips best available tool. Stops when target amount is reached or no more blocks are found. Keywords: mine, gather, collect, harvest, farm blocks.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        resource: {
+          type: 'string',
+          description: 'Block resource to gather (e.g., "oak_log", "cobblestone", "iron_ore", "dirt")',
+        },
+        amount: {
+          type: 'number',
+          description: 'Target number of items to collect',
+        },
+        range: {
+          type: 'number',
+          description: 'Maximum search range in blocks (default: 64, max: 128)',
+          default: 64,
+        },
+      },
+      required: ['resource', 'amount'],
     },
   },
 ];
@@ -414,6 +439,71 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
+
+      case 'minecraft_gather_resource': {
+        const resource = args.resource;
+        const amount = args.amount;
+        const range = args.range || 64;
+
+        // Validate inputs
+        if (!resource || typeof resource !== 'string') {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Please provide a valid resource name (e.g., "oak_log", "cobblestone").',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        if (!amount || amount <= 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'Please provide a valid amount greater than 0.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Execute gathering (this is async and will take time)
+        const result = await gatherResourceTool.gatherResource(resource, amount, range);
+
+        if (result.success) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  message: `Successfully gathered ${result.collected}x ${result.resource}`,
+                  collected: result.collected,
+                  resource: result.resource,
+                }, null, 2),
+              },
+            ],
+          };
+        } else {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  message: result.message,
+                  collected: result.collected,
+                  resource: result.resource,
+                }, null, 2),
+              },
+            ],
+            isError: result.collected === 0,
+          };
+        }
       }
 
       default:
