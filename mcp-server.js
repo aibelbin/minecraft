@@ -19,14 +19,17 @@ const guard = require('./tools/guard');
 const selfDefense = require('./tools/selfDefense');
 const gatherResource = require('./tools/gatherResource');
 const giveItem = require('./tools/giveItem');
+const selfSustain = require('./tools/selfSustain');
 
 // Initialize bot tools
 console.error('Initializing Minecraft bot tools...');
 autoEquip(bot);
+selfSustain(bot);
 const guardTool = guard(bot);
 const selfDefenseTool = selfDefense(bot);
 const gatherResourceTool = gatherResource(bot);
 const giveItemTool = giveItem(bot);
+
 
 // Create MCP server
 const server = new Server(
